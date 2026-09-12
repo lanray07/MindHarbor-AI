@@ -68,7 +68,7 @@ jobs:
             xcrun simctl install "$udid" "$APP_PATH"
             xcrun simctl status_bar "$udid" override --time "9:41" --batteryState charged --batteryLevel 100 --wifiBars 3 --cellularBars 4
 
-            for item in "01-Today:0" "02-Journal:1" "03-Patterns:2"; do
+            for item in "01-Today:0" "02-Journal:1" "03-Patterns:2" "04-Copilot:3" "05-Settings:4"; do
               local filename="${item%%:*}"
               local tab="${item##*:}"
               xcrun simctl terminate "$udid" "$BUNDLE_ID" 2>/dev/null || true
