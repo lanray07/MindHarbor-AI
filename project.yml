@@ -35,6 +35,7 @@ targets:
         CFBundleShortVersionString: "$(MARKETING_VERSION)"
         CFBundleVersion: "$(CURRENT_PROJECT_VERSION)"
         CFBundleIconName: AppIcon
+        ITSAppUsesNonExemptEncryption: false
         LSRequiresIPhoneOS: true
         UIRequiresFullScreen: true
         UIUserInterfaceStyle: Light
