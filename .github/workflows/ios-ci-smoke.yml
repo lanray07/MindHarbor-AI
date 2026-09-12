@@ -1,0 +1,14 @@
+name: iOS CI Smoke
+
+on:
+  push:
+    branches: [master]
+  workflow_dispatch:
+
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Smoke
+        run: |
+          echo "workflow dispatch and push hooks are alive"
