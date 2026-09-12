@@ -1,0 +1,43 @@
+name: MindHarborAI
+
+options:
+  createIntermediateGroups: true
+  developmentLanguage: en
+  deploymentTarget:
+    iOS: "17.0"
+  defaultConfig: Release
+
+settings:
+  base:
+    SWIFT_VERSION: "5.9"
+    PRODUCT_BUNDLE_IDENTIFIER: com.mindharborai.MindHarborAI
+
+targets:
+  MindHarborAI:
+    type: application
+    platform: iOS
+    deploymentTarget: "17.0"
+    sources:
+      - path: .
+        excludes:
+          - ".git"
+          - ".github"
+          - "project.yml"
+          - "README.md"
+    info:
+      path: MindHarborAI-Info.plist
+      properties:
+        CFBundleDisplayName: MindHarbor AI
+        CFBundleName: MindHarborAI
+        CFBundleShortVersionString: 1.0
+        CFBundleVersion: 1
+        LSRequiresIPhoneOS: true
+        UIRequiresFullScreen: true
+        UIUserInterfaceStyle: Light
+        UILaunchStoryboardName: ""
+        UISupportedInterfaceOrientations:
+          - UIInterfaceOrientationPortrait
+        NSMicrophoneUsageDescription: "MindHarbor AI uses your microphone for voice journaling."
+        NSSpeechRecognitionUsageDescription: "MindHarbor AI uses speech recognition to transcribe voice notes."
+        NSFaceIDUsageDescription: "MindHarbor AI can use Face ID when you enable app lock."
+        NSPhotoLibraryUsageDescription: "MindHarbor AI may access photos only if you choose to attach media."

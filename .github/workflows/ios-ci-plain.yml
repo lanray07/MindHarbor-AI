@@ -12,10 +12,27 @@ jobs:
         uses: maxim-lobanov/setup-xcode@v1
         with:
           xcode-version: latest-stable
+      - name: Prepare Xcode project
+        shell: bash
+        run: |
+          set -euo pipefail
+          if ! command -v xcodegen >/dev/null; then
+            gem install xcodegen --no-document
+          fi
+          WORKSPACE=$(find . -name "*.xcworkspace" -maxdepth 6 -print -quit || true)
+          PROJECT=$(find . -name "*.xcodeproj" -maxdepth 6 -print -quit || true)
+          if [ -z "$WORKSPACE" ] && [ -z "$PROJECT" ]; then
+            if [ -f project.yml ]; then
+              xcodegen generate
+            else
+              echo "No xcode project found."
+              exit 1
+            fi
+          fi
       - name: Resolve and Build
         run: |
-          WORKSPACE=$(find . -name "*.xcworkspace" -maxdepth 6 -print | head -n 1 || true)
-          PROJECT=$(find . -name "*.xcodeproj" -maxdepth 6 -print | head -n 1 || true)
+          WORKSPACE=$(find . -name "*.xcworkspace" -maxdepth 6 -print -quit || true)
+          PROJECT=$(find . -name "*.xcodeproj" -maxdepth 6 -print -quit || true)
           if [ -z "$WORKSPACE" ] && [ -z "$PROJECT" ]; then
             echo "No xcode project found."
             exit 1

@@ -12,6 +12,8 @@ jobs:
     env:
       CONFIGURATION: Release
       EXPORT_METHOD: app-store
+      IOS_BUNDLE_IDENTIFIER: ${{ vars.IOS_BUNDLE_IDENTIFIER || 'com.mindharborai.MindHarborAI' }}
+      XCODE_SCHEME: ${{ vars.XCODE_SCHEME || vars.XCODE_SCHEME_OVERRIDE || '' }}
     steps:
       - uses: actions/checkout@v4
       - name: Setup Xcode
@@ -19,13 +21,34 @@ jobs:
         with:
           xcode-version: latest-stable
 
+      - name: Prepare Xcode project
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          if ! command -v xcodegen >/dev/null; then
+            gem install xcodegen --no-document
+          fi
+
+          WORKSPACE=$(find . -name "*.xcworkspace" -maxdepth 6 -print -quit || true)
+          PROJECT=$(find . -name "*.xcodeproj" -maxdepth 6 -print -quit || true)
+
+          if [ -z "$WORKSPACE" ] && [ -z "$PROJECT" ]; then
+            if [ -f project.yml ]; then
+              xcodegen generate
+            else
+              echo "No .xcworkspace, .xcodeproj, or project.yml was found."
+              exit 1
+            fi
+          fi
+
       - name: Resolve Xcode project and scheme
         id: resolve
         shell: bash
         run: |
           set -euo pipefail
-          WORKSPACE=$(find . -name "*.xcworkspace" -maxdepth 6 -print | head -n 1 || true)
-          PROJECT=$(find . -name "*.xcodeproj" -maxdepth 6 -print | head -n 1 || true)
+          WORKSPACE=$(find . -name "*.xcworkspace" -maxdepth 6 -print -quit || true)
+          PROJECT=$(find . -name "*.xcodeproj" -maxdepth 6 -print -quit || true)
           if [ -z "$WORKSPACE" ] && [ -z "$PROJECT" ]; then
             echo "No project found."
             exit 1
@@ -39,7 +62,11 @@ jobs:
             echo "TYPE=project" >> "$GITHUB_OUTPUT"
             echo "TARGET=$PROJECT" >> "$GITHUB_OUTPUT"
           fi
-          SCHEME=$(echo "$SCHEME_LIST" | awk '/^    Schemes:/{p=1; next} p && /^    / && !/Schemes:/{print $1; exit}')
+          if [ -n "${XCODE_SCHEME:-}" ]; then
+            SCHEME="$XCODE_SCHEME"
+          else
+            SCHEME=$(echo "$SCHEME_LIST" | awk '/^    Schemes:/{p=1; next} p && /^    / && !/Schemes:/{print $1; exit}')
+          fi
           if [ -z "$SCHEME" ]; then
             echo "Could not infer scheme."
             exit 1
@@ -51,9 +78,9 @@ jobs:
         run: |
           set -euo pipefail
           if [ "${{ steps.resolve.outputs.TYPE }}" = "workspace" ]; then
-            xcodebuild -workspace "${{ steps.resolve.outputs.TARGET }}" -scheme "${{ steps.resolve.outputs.SCHEME }}" -configuration "$CONFIGURATION" -destination "generic/platform=iOS" build
+            xcodebuild -workspace "${{ steps.resolve.outputs.TARGET }}" -scheme "${{ steps.resolve.outputs.SCHEME }}" -configuration "$CONFIGURATION" -destination "generic/platform=iOS" PRODUCT_BUNDLE_IDENTIFIER="$IOS_BUNDLE_IDENTIFIER" build
           else
-            xcodebuild -project "${{ steps.resolve.outputs.TARGET }}" -scheme "${{ steps.resolve.outputs.SCHEME }}" -configuration "$CONFIGURATION" -destination "generic/platform=iOS" build
+            xcodebuild -project "${{ steps.resolve.outputs.TARGET }}" -scheme "${{ steps.resolve.outputs.SCHEME }}" -configuration "$CONFIGURATION" -destination "generic/platform=iOS" PRODUCT_BUNDLE_IDENTIFIER="$IOS_BUNDLE_IDENTIFIER" build
           fi
 
       - name: Archive for TestFlight (manual only)
@@ -80,9 +107,9 @@ jobs:
           security set-key-partition-list -S apple-tool:,apple: -s -k "$KEYCHAIN_PASSWORD" ~/Library/Keychains/build.keychain
           ARCHIVE_PATH="$RUNNER_TEMP/${{ steps.resolve.outputs.SCHEME }}.xcarchive"
           if [ "${{ steps.resolve.outputs.TYPE }}" = "workspace" ]; then
-            xcodebuild -workspace "${{ steps.resolve.outputs.TARGET }}" -scheme "${{ steps.resolve.outputs.SCHEME }}" -archivePath "$ARCHIVE_PATH" DEVELOPMENT_TEAM="$XCODE_DEVELOPMENT_TEAM" CODE_SIGN_STYLE=Manual archive
+            xcodebuild -workspace "${{ steps.resolve.outputs.TARGET }}" -scheme "${{ steps.resolve.outputs.SCHEME }}" -archivePath "$ARCHIVE_PATH" PRODUCT_BUNDLE_IDENTIFIER="$IOS_BUNDLE_IDENTIFIER" DEVELOPMENT_TEAM="$XCODE_DEVELOPMENT_TEAM" CODE_SIGN_STYLE=Manual archive
           else
-            xcodebuild -project "${{ steps.resolve.outputs.TARGET }}" -scheme "${{ steps.resolve.outputs.SCHEME }}" -archivePath "$ARCHIVE_PATH" DEVELOPMENT_TEAM="$XCODE_DEVELOPMENT_TEAM" CODE_SIGN_STYLE=Manual archive
+            xcodebuild -project "${{ steps.resolve.outputs.TARGET }}" -scheme "${{ steps.resolve.outputs.SCHEME }}" -archivePath "$ARCHIVE_PATH" PRODUCT_BUNDLE_IDENTIFIER="$IOS_BUNDLE_IDENTIFIER" DEVELOPMENT_TEAM="$XCODE_DEVELOPMENT_TEAM" CODE_SIGN_STYLE=Manual archive
           fi
           cat > "$RUNNER_TEMP/ExportOptions.plist" <<'PLIST'
           <?xml version="1.0" encoding="UTF-8"?>
