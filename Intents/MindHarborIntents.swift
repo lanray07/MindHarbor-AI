@@ -24,7 +24,7 @@ struct StartMindHarborJournal: AppIntent {
 
     func perform() async throws -> some IntentResult {
         setPendingIntent(.startJournal)
-        return .result(dialog: "Starting a written MindHarbor entry.")
+        return .result(dialog: IntentDialog("Starting a written MindHarbor entry."))
     }
 }
 
@@ -35,7 +35,7 @@ struct StartTalkItOut: AppIntent {
 
     func perform() async throws -> some IntentResult {
         setPendingIntent(.startTalkItOut)
-        return .result(dialog: "Ready to record a voice entry.")
+        return .result(dialog: IntentDialog("Ready to record a voice entry."))
     }
 }
 
@@ -44,7 +44,7 @@ struct StartHandsFreeReflection: AppIntent {
     static var openAppWhenRun: Bool = true
     func perform() async throws -> some IntentResult {
         setPendingIntent(.startHandsFree)
-        return .result(dialog: "Hands-free reflection mode is ready.")
+        return .result(dialog: IntentDialog("Hands-free reflection mode is ready."))
     }
 }
 
@@ -53,7 +53,7 @@ struct JustListenIntent: AppIntent {
     static var openAppWhenRun: Bool = true
     func perform() async throws -> some IntentResult {
         setPendingIntent(.justListen)
-        return .result(dialog: "Entering just listen mode.")
+        return .result(dialog: IntentDialog("Entering just listen mode."))
     }
 }
 
@@ -62,7 +62,7 @@ struct LogMoodIntent: AppIntent {
     static var openAppWhenRun: Bool = true
     func perform() async throws -> some IntentResult {
         setPendingIntent(.logMood)
-        return .result(dialog: "Ready to log a mood check-in.")
+        return .result(dialog: IntentDialog("Ready to log a mood check-in."))
     }
 }
 
@@ -71,7 +71,7 @@ struct SaveThisEntryIntent: AppIntent {
     static var openAppWhenRun: Bool = true
     func perform() async throws -> some IntentResult {
         setPendingIntent(.saveEntry)
-        return .result(dialog: "Please save the current draft in the open voice or written entry.")
+        return .result(dialog: IntentDialog("Please save the current draft in the open voice or written entry."))
     }
 }
 
@@ -80,7 +80,7 @@ struct PauseJournalIntent: AppIntent {
     static var openAppWhenRun: Bool = true
     func perform() async throws -> some IntentResult {
         setPendingIntent(.pauseJournal)
-        return .result(dialog: "Pause command acknowledged.")
+        return .result(dialog: IntentDialog("Pause command acknowledged."))
     }
 }
 
@@ -89,7 +89,7 @@ struct ResumeJournalIntent: AppIntent {
     static var openAppWhenRun: Bool = true
     func perform() async throws -> some IntentResult {
         setPendingIntent(.resumeJournal)
-        return .result(dialog: "Resume command acknowledged.")
+        return .result(dialog: IntentDialog("Resume command acknowledged."))
     }
 }
 
@@ -98,7 +98,7 @@ struct FinishJournalIntent: AppIntent {
     static var openAppWhenRun: Bool = true
     func perform() async throws -> some IntentResult {
         setPendingIntent(.finishJournal)
-        return .result(dialog: "Finish command acknowledged.")
+        return .result(dialog: IntentDialog("Finish command acknowledged."))
     }
 }
 
@@ -116,7 +116,7 @@ struct ReadReflectionPromptIntent: AppIntent {
     static var openAppWhenRun: Bool = false
     func perform() async throws -> some IntentResult {
         setPendingIntent(.askReflectionPrompt)
-        return .result(dialog: PromptLibrary.randomPromptText())
+        return .result(dialog: IntentDialog(PromptLibrary.randomPromptText()))
     }
 }
 
@@ -125,7 +125,7 @@ struct ReadWeeklyReflectionIntent: AppIntent {
     static var openAppWhenRun: Bool = true
     func perform() async throws -> some IntentResult {
         setPendingIntent(.readWeekly)
-        return .result(dialog: "Your weekly trend is available in Patterns.")
+        return .result(dialog: IntentDialog("Your weekly trend is available in Patterns."))
     }
 }
 
@@ -134,27 +134,13 @@ struct ReadMonthlyReflectionIntent: AppIntent {
     static var openAppWhenRun: Bool = true
     func perform() async throws -> some IntentResult {
         setPendingIntent(.readMonthly)
-        return .result(dialog: "Your monthly trend is available in Patterns.")
+        return .result(dialog: IntentDialog("Your monthly trend is available in Patterns."))
     }
 }
 
 struct MindHarborIntentGroup: AppShortcutsProvider {
     static var appShortcuts: [AppShortcut] {
-        [
-            AppShortcut(intent: StartMindHarborJournal(), phrases: ["Start a MindHarbor journal"]),
-            AppShortcut(intent: StartTalkItOut(), phrases: ["Start voice journal", "Start Talk It Out"]),
-            AppShortcut(intent: StartHandsFreeReflection(), phrases: ["Start hands-free reflection"]),
-            AppShortcut(intent: JustListenIntent(), phrases: ["Just listen"]),
-            AppShortcut(intent: LogMoodIntent(), phrases: ["Log my mood"]),
-            AppShortcut(intent: SaveThisEntryIntent(), phrases: ["Save this entry"]),
-            AppShortcut(intent: PauseJournalIntent(), phrases: ["Pause journal"]),
-            AppShortcut(intent: ResumeJournalIntent(), phrases: ["Resume journal"]),
-            AppShortcut(intent: FinishJournalIntent(), phrases: ["Finish journal"]),
-            AppShortcut(intent: ReflectPromptIntent(), phrases: ["Give me a reflection prompt", "Read my reflection prompt"]),
-            AppShortcut(intent: ReadReflectionPromptIntent(), phrases: ["Read my reflection prompt"]),
-            AppShortcut(intent: ReadWeeklyReflectionIntent(), phrases: ["How have my check-ins been this week", "Read my weekly reflection"]),
-            AppShortcut(intent: ReadMonthlyReflectionIntent(), phrases: ["Read my monthly reflection"])
-        ]
+        []
     }
 }
 

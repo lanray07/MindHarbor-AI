@@ -14,7 +14,7 @@ final class NotificationManager {
     private var hasRequestedAuthorization = false
     private let center = UNUserNotificationCenter.current()
 
-    func requestAuthorizationIfNeeded(completion: (@escaping (Bool) -> Void)? = nil) {
+    func requestAuthorizationIfNeeded(completion: ((Bool) -> Void)? = nil) {
         center.getNotificationSettings { [weak self] settings in
             guard let self else { return }
             let allowed = settings.authorizationStatus == .authorized ||
@@ -46,7 +46,7 @@ final class NotificationManager {
         customHour: Int,
         customMinute: Int
     ) {
-        requestAuthorizationIfNeeded { [weak self] allowed in
+        requestAuthorizationIfNeeded { [weak self] (allowed: Bool) in
             guard allowed else { return }
             guard let self else { return }
 

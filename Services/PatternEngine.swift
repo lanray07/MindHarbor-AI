@@ -68,15 +68,15 @@ struct PatternEngine {
                 PatternResult(
                     title: "Mood by weekday",
                     detail: "You tended to report higher moods on \(top.key).",
-                    sampleCount: top.valueSample,
+                        sampleCount: top.value.valueSample,
                     confidence: .emerging
                 )
             )
         }
 
         if entries.count >= 5 {
-        let keywordCounts = recurringKeywords(from: entries)
-        for (word, count) in keywordCounts where count >= 4 {
+            let keywordCounts = recurringKeywords(from: entries)
+            for (word, count) in keywordCounts where count >= 4 {
                 results.append(
                     PatternResult(
                         title: "Recurring language",
@@ -166,8 +166,8 @@ struct PatternEngine {
         let first = Array(current.prefix(splitPoint))
         let last = Array(current.suffix(current.count - splitPoint))
         guard !last.isEmpty else { return "\(label) remains mostly stable." }
-        let firstAvg = first.reduce(0, +) { $0 + $1.moodRaw } / max(1, first.count)
-        let lastAvg = last.reduce(0, +) { $0 + $1.moodRaw } / max(1, last.count)
+        let firstAvg = first.reduce(0) { $0 + $1.moodRaw } / max(1, first.count)
+        let lastAvg = last.reduce(0) { $0 + $1.moodRaw } / max(1, last.count)
 
         if lastAvg > firstAvg {
             return "\(label) appeared higher in the more recent check-ins."

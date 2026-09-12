@@ -44,7 +44,7 @@ struct TodayView: View {
                     }
 
                     sectionCard(title: "SOMETHING TO NOTICE") {
-                        Text(ReflectionSnippet.daily)
+                        Text(ReflectionSnippet.dailyMoment(entries: entries, checkIns: checkIns))
                             .font(.headline)
                         Text("Explore your patterns for more context.")
                             .font(.caption)
@@ -358,7 +358,7 @@ struct JournalComposeSheet: View {
             bodyText: bodyText,
             kind: .written,
             mood: mood,
-            includeAI: includeAI,
+            includeInAI: includeAI,
             isPrivateNote: isPrivateNote,
             isFavorite: isFavorite,
             tags: Array(selectedTags),
@@ -655,8 +655,8 @@ private struct VoiceReviewSheet: View {
             includeInAI: includeAI,
             tags: Array(selectedTags),
             transcript: bodyText,
-            keepAudio: keepAudio,
-            reflectionPromptCount: reflectionPromptUsed ? 1 : 0
+            reflectionPromptCount: reflectionPromptUsed ? 1 : 0,
+            keepAudio: keepAudio
         )
         context.insert(entry)
         try? context.save()
