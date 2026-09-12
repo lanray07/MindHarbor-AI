@@ -9,7 +9,7 @@ jobs:
   build:
     runs-on: macos-latest
     env:
-      SCHEME_OVERRIDE: ${{ vars.XCODE_SCHEME }}
+      SCHEME_OVERRIDE: ""
       CONFIGURATION: Release
       EXPORT_METHOD: app-store
     steps:
@@ -92,12 +92,20 @@ jobs:
 
           mkdir -p ~/certs ~/profiles "$RUNNER_TEMP"
 
+          if [ -z "${{ secrets.BUILD_MOBILEPROVISION_BASE64 }}" ]; then
+            echo "BUILD_MOBILEPROVISION_BASE64 is missing."
+            exit 1
+          fi
           echo "${{ secrets.BUILD_CERTIFICATE_BASE64 }}" | base64 --decode > ~/certs/build_certificate.p12
           echo "${{ secrets.BUILD_MOBILEPROVISION_BASE64 }}" | base64 --decode > ~/profiles/profile.mobileprovision
 
-          security create-keychain -p "${{ secrets.KEYCHAIN_PASSWORD || 'temp-pass' }}" build.keychain
+          KEYCHAIN_PASSWORD="${{ secrets.KEYCHAIN_PASSWORD }}"
+          if [ -z "$KEYCHAIN_PASSWORD" ]; then
+            KEYCHAIN_PASSWORD="temp-pass"
+          fi
+          security create-keychain -p "$KEYCHAIN_PASSWORD" build.keychain
           security import ~/certs/build_certificate.p12 -k ~/Library/Keychains/build.keychain -P "${{ secrets.BUILD_CERTIFICATE_PASSWORD }}" -T /usr/bin/codesign
-          security set-key-partition-list -S apple-tool:,apple: -s -k "${{ secrets.KEYCHAIN_PASSWORD || 'temp-pass' }}" ~/Library/Keychains/build.keychain
+          security set-key-partition-list -S apple-tool:,apple: -s -k "$KEYCHAIN_PASSWORD" ~/Library/Keychains/build.keychain
 
           TARGET_TYPE="${{ steps.resolve.outputs.build_target }}"
           TARGET_PATH="${{ steps.resolve.outputs.path }}"
