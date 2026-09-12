@@ -100,9 +100,9 @@ jobs:
         run: |
           set -euo pipefail
           if [ "${{ steps.resolve.outputs.BUILD_TYPE }}" = "workspace" ]; then
-            xcodebuild -workspace "${{ steps.resolve.outputs.TARGET }}" -scheme "${{ steps.resolve.outputs.SCHEME }}" -configuration "$CONFIGURATION" -destination "generic/platform=iOS" PRODUCT_BUNDLE_IDENTIFIER="$IOS_BUNDLE_IDENTIFIER" build
+            xcodebuild -workspace "${{ steps.resolve.outputs.TARGET }}" -scheme "${{ steps.resolve.outputs.SCHEME }}" -configuration "$CONFIGURATION" -destination "generic/platform=iOS" PRODUCT_BUNDLE_IDENTIFIER="$IOS_BUNDLE_IDENTIFIER" CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY= build
           else
-            xcodebuild -project "${{ steps.resolve.outputs.TARGET }}" -scheme "${{ steps.resolve.outputs.SCHEME }}" -configuration "$CONFIGURATION" -destination "generic/platform=iOS" PRODUCT_BUNDLE_IDENTIFIER="$IOS_BUNDLE_IDENTIFIER" build
+            xcodebuild -project "${{ steps.resolve.outputs.TARGET }}" -scheme "${{ steps.resolve.outputs.SCHEME }}" -configuration "$CONFIGURATION" -destination "generic/platform=iOS" PRODUCT_BUNDLE_IDENTIFIER="$IOS_BUNDLE_IDENTIFIER" CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY= build
           fi
 
       - name: Archive and export IPA (manual run)
