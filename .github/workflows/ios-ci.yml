@@ -137,9 +137,9 @@ jobs:
           )
 
           if [ "${{ steps.resolve.outputs.BUILD_TYPE }}" = "workspace" ]; then
-            xcodebuild -workspace "${{ steps.resolve.outputs.TARGET }}" -scheme "${{ steps.resolve.outputs.SCHEME }}" -configuration "$CONFIGURATION" -destination "generic/platform=iOS" -archivePath "$ARCHIVE_PATH" PRODUCT_BUNDLE_IDENTIFIER="$IOS_BUNDLE_IDENTIFIER" CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY= archive
+            xcodebuild -workspace "${{ steps.resolve.outputs.TARGET }}" -scheme "${{ steps.resolve.outputs.SCHEME }}" -configuration "$CONFIGURATION" -destination "generic/platform=iOS" -archivePath "$ARCHIVE_PATH" PRODUCT_BUNDLE_IDENTIFIER="$IOS_BUNDLE_IDENTIFIER" CURRENT_PROJECT_VERSION="$GITHUB_RUN_NUMBER" CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY= archive
           else
-            xcodebuild -project "${{ steps.resolve.outputs.TARGET }}" -scheme "${{ steps.resolve.outputs.SCHEME }}" -configuration "$CONFIGURATION" -destination "generic/platform=iOS" -archivePath "$ARCHIVE_PATH" PRODUCT_BUNDLE_IDENTIFIER="$IOS_BUNDLE_IDENTIFIER" CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY= archive
+            xcodebuild -project "${{ steps.resolve.outputs.TARGET }}" -scheme "${{ steps.resolve.outputs.SCHEME }}" -configuration "$CONFIGURATION" -destination "generic/platform=iOS" -archivePath "$ARCHIVE_PATH" PRODUCT_BUNDLE_IDENTIFIER="$IOS_BUNDLE_IDENTIFIER" CURRENT_PROJECT_VERSION="$GITHUB_RUN_NUMBER" CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY= archive
           fi
 
           cat > "$RUNNER_TEMP/ExportOptions.plist" <<PLIST
