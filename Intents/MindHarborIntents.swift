@@ -116,7 +116,7 @@ struct ReadReflectionPromptIntent: AppIntent {
     static var openAppWhenRun: Bool = false
     func perform() async throws -> some IntentResult {
         setPendingIntent(.askReflectionPrompt)
-        return .result(dialog: IntentDialog(PromptLibrary.randomPromptText()))
+        return .result(value: PromptLibrary.randomPromptText())
     }
 }
 
@@ -135,12 +135,6 @@ struct ReadMonthlyReflectionIntent: AppIntent {
     func perform() async throws -> some IntentResult {
         setPendingIntent(.readMonthly)
         return .result(dialog: IntentDialog("Your monthly trend is available in Patterns."))
-    }
-}
-
-struct MindHarborIntentGroup: AppShortcutsProvider {
-    static var appShortcuts: [AppShortcut] {
-        []
     }
 }
 
