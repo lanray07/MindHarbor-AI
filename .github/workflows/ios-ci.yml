@@ -8,8 +8,7 @@ on:
       export_ipa:
         description: Build and export an IPA after archive (requires signing configured in repo secrets)
         required: false
-        type: boolean
-        default: false
+        default: "false"
 
 jobs:
   build:
@@ -147,4 +146,3 @@ PLIST
           api-key-id: ${{ secrets.APP_STORE_CONNECT_API_KEY_ID }}
           api-key-issuer-id: ${{ secrets.APP_STORE_CONNECT_API_ISSUER_ID }}
           api-private-key: ${{ secrets.APP_STORE_CONNECT_API_PRIVATE_KEY }}
-
