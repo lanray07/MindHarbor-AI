@@ -3,6 +3,8 @@ import SwiftUI
 
 @main
 struct MindHarborAIApp: App {
+    @StateObject private var subscriptionStore = SubscriptionStore()
+
     init() {
         if UserDefaults.standard.object(forKey: MindHarborKeys.shouldSpeakPrompts) == nil {
             UserDefaults.standard.setValue(true, forKey: MindHarborKeys.shouldSpeakPrompts)
@@ -52,7 +54,7 @@ struct MindHarborAIApp: App {
         WindowGroup {
             AppShellView()
                 .modelContainer(for: [JournalEntry.self, MoodCheckIn.self, CopilotMessage.self, SupportContact.self])
+                .environmentObject(subscriptionStore)
         }
     }
 }
-

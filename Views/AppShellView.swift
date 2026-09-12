@@ -4,6 +4,7 @@ import UIKit
 
 struct AppShellView: View {
     @Environment(\.modelContext) private var modelContext
+    @EnvironmentObject private var subscriptionStore: SubscriptionStore
     @AppStorage(MindHarborKeys.appLockEnabled) private var appLockEnabled = false
     @AppStorage(MindHarborKeys.lockInBackground) private var lockInBackground = true
     @AppStorage(MindHarborKeys.pendingIntentAction) private var pendingIntentAction = ""
@@ -30,13 +31,25 @@ struct AppShellView: View {
                 }
                 .tag(1)
 
-            PatternsView()
+            PremiumFeatureGate(
+                title: "Understand your patterns",
+                message: "MindHarbor Plus turns your check-ins and journal history into gentle weekly and monthly reflections.",
+                systemImage: "waveform.path.ecg"
+            ) {
+                PatternsView()
+            }
                 .tabItem {
                     Label("Patterns", systemImage: "waveform.path.ecg")
                 }
                 .tag(2)
 
-            CopilotView()
+            PremiumFeatureGate(
+                title: "Meet your reflection copilot",
+                message: "MindHarbor Plus gives you thoughtful AI prompts that help you explore your own words without diagnosis or judgement.",
+                systemImage: "bubble.left.and.bubble.right.fill"
+            ) {
+                CopilotView()
+            }
                 .tabItem {
                     Label("Copilot", systemImage: "bubble.left.and.bubble.right.fill")
                 }
@@ -169,6 +182,49 @@ struct AppShellView: View {
         }
         showShortcutMessage = true
         if !shouldKeepForToday { pendingIntentAction = "" }
+    }
+}
+
+private struct PremiumFeatureGate<Content: View>: View {
+    @EnvironmentObject private var subscriptionStore: SubscriptionStore
+    @State private var showPaywall = false
+
+    let title: String
+    let message: String
+    let systemImage: String
+    @ViewBuilder let content: () -> Content
+
+    var body: some View {
+        Group {
+            if subscriptionStore.hasActiveSubscription || ScreenshotFixtures.isEnabled {
+                content()
+            } else {
+                NavigationStack {
+                    VStack(spacing: 22) {
+                        Image(systemName: systemImage)
+                            .font(.system(size: 54, weight: .medium))
+                            .foregroundStyle(.teal)
+                        Text(title)
+                            .font(.title2.weight(.bold))
+                            .multilineTextAlignment(.center)
+                        Text(message)
+                            .foregroundStyle(.secondary)
+                            .multilineTextAlignment(.center)
+                            .frame(maxWidth: 420)
+                        Button("Explore MindHarbor Plus") {
+                            showPaywall = true
+                        }
+                        .buttonStyle(.borderedProminent)
+                        .tint(.teal)
+                    }
+                    .padding(32)
+                    .navigationTitle("MindHarbor Plus")
+                }
+            }
+        }
+        .sheet(isPresented: $showPaywall) {
+            SubscriptionView()
+        }
     }
 }
 

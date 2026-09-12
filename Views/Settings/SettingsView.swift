@@ -3,6 +3,7 @@ import SwiftData
 import UIKit
 
 struct SettingsView: View {
+    @EnvironmentObject private var subscriptionStore: SubscriptionStore
     @AppStorage(MindHarborKeys.shouldSpeakPrompts) private var shouldSpeakPrompts = true
     @AppStorage(MindHarborKeys.shouldReadWeekly) private var shouldReadWeekly = true
     @AppStorage(MindHarborKeys.shouldReadMonthly) private var shouldReadMonthly = true
@@ -31,10 +32,30 @@ struct SettingsView: View {
     @State private var deleteAllData = false
     @State private var showDeleteAudioAlert = false
     @State private var showDeleteTranscriptsAlert = false
+    @State private var showSubscription = ProcessInfo.processInfo.arguments.contains("-showSubscription")
 
     var body: some View {
         NavigationStack {
             List {
+                Section("MindHarbor Plus") {
+                    Button {
+                        showSubscription = true
+                    } label: {
+                        HStack(spacing: 12) {
+                            Image(systemName: subscriptionStore.hasActiveSubscription ? "checkmark.seal.fill" : "sparkles")
+                                .foregroundStyle(.teal)
+                            VStack(alignment: .leading, spacing: 3) {
+                                Text(subscriptionStore.hasActiveSubscription ? "MindHarbor Plus is active" : "Explore MindHarbor Plus")
+                                    .foregroundStyle(.primary)
+                                Text(subscriptionStore.hasActiveSubscription ? "Your premium reflections are unlocked." : "AI reflections and deeper personal patterns.")
+                                    .font(.caption)
+                                    .foregroundStyle(.secondary)
+                            }
+                        }
+                    }
+                    .accessibilityIdentifier("mindharbor-plus-button")
+                }
+
                 Section("Spoken responses") {
                     Toggle("Spoken prompts", isOn: $shouldSpeakPrompts)
                     Toggle("Voice follow-ups", isOn: $shouldFollowUpWithVoice)
@@ -107,6 +128,9 @@ struct SettingsView: View {
                 }
             }
             .navigationTitle("Settings")
+            .sheet(isPresented: $showSubscription) {
+                SubscriptionView()
+            }
             .onAppear {
                 NotificationManager.shared.configureReminders(
                     morning: reminderMorning,
