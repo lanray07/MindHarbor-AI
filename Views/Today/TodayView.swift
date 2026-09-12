@@ -82,7 +82,9 @@ struct TodayView: View {
             }
             .onAppear {
                 if checkIns.isEmpty == false && checkIns.suffix(7).count >= 3 {
-                    NotificationManager.shared.requestAuthorizationIfNeeded()
+                    if !ScreenshotFixtures.isEnabled {
+                        NotificationManager.shared.requestAuthorizationIfNeeded()
+                    }
                 }
                 handlePendingIntentAction()
             }

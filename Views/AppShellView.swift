@@ -49,7 +49,7 @@ struct AppShellView: View {
                 .tag(4)
         }
         .tint(.teal)
-        .privacySensitive()
+        .privacySensitive(!ScreenshotFixtures.isEnabled)
         .sheet(isPresented: $showOnboarding, onDismiss: {
             showOnboarding = false
         }) {
