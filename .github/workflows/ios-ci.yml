@@ -12,7 +12,7 @@ jobs:
     env:
       CONFIGURATION: Release
       EXPORT_METHOD: app-store-connect
-      IOS_BUNDLE_IDENTIFIER: ${{ vars.IOS_BUNDLE_IDENTIFIER || 'com.mindharborai.MindHarborAI' }}
+      IOS_BUNDLE_IDENTIFIER: ${{ vars.IOS_BUNDLE_IDENTIFIER || 'com.MindHarborAI.app' }}
       XCODE_SCHEME: ${{ vars.XCODE_SCHEME || vars.XCODE_SCHEME_OVERRIDE || '' }}
     steps:
       - name: Checkout
