@@ -3,6 +3,9 @@ name: iOS CI (Xcode on GitHub)
 on:
   push:
     branches: [master]
+  repository_dispatch:
+    types:
+      - run-xcode
   workflow_dispatch:
     inputs:
       export_ipa:
@@ -85,7 +88,7 @@ jobs:
           fi
 
       - name: Archive for distribution
-        if: github.event.inputs.export_ipa == 'true' || github.event_name == 'workflow_dispatch'
+        if: github.event.inputs.export_ipa == 'true' || github.event_name == 'workflow_dispatch' || github.event_name == 'repository_dispatch' && (github.event.client_payload.export_ipa == 'true' || github.event.client_payload.export_ipa == true)
         id: archive
         run: |
           set -euo pipefail
@@ -139,7 +142,7 @@ PLIST
           xcodebuild -exportArchive -archivePath "$ARCHIVE_PATH" -exportPath "$EXPORT_PATH" -exportOptionsPlist "$RUNNER_TEMP/ExportOptions.plist"
 
       - name: Upload to TestFlight
-        if: github.event.inputs.export_ipa == 'true' && github.ref == 'refs/heads/master'
+        if: (github.event.inputs.export_ipa == 'true' || github.event_name == 'repository_dispatch' && (github.event.client_payload.export_ipa == 'true' || github.event.client_payload.export_ipa == true)) && github.ref == 'refs/heads/master'
         uses: apple-actions/upload-testflight-build@v1
         with:
           app-path: ${{ runner.temp }}/export/*.ipa
