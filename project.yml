@@ -13,6 +13,7 @@ settings:
     PRODUCT_BUNDLE_IDENTIFIER: com.MindHarborAI.app
     MARKETING_VERSION: "1.0"
     CURRENT_PROJECT_VERSION: "1"
+    ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
 
 targets:
   MindHarborAI:
@@ -33,6 +34,7 @@ targets:
         CFBundleName: MindHarborAI
         CFBundleShortVersionString: "$(MARKETING_VERSION)"
         CFBundleVersion: "$(CURRENT_PROJECT_VERSION)"
+        CFBundleIconName: AppIcon
         LSRequiresIPhoneOS: true
         UIRequiresFullScreen: true
         UIUserInterfaceStyle: Light
