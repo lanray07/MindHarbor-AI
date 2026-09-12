@@ -159,11 +159,18 @@ jobs:
 
           xcodebuild -exportArchive -archivePath "$ARCHIVE_PATH" -exportPath "$EXPORT_PATH" -exportOptionsPlist "$RUNNER_TEMP/ExportOptions.plist" "${AUTH_ARGS[@]}"
 
+          IPA_PATH=$(find "$EXPORT_PATH" -name "*.ipa" -type f -print -quit)
+          if [ -z "$IPA_PATH" ]; then
+            echo "No IPA was produced by the archive export."
+            exit 1
+          fi
+          echo "IPA_PATH=$IPA_PATH" >> "$GITHUB_OUTPUT"
+
       - name: Upload to TestFlight (manual run)
         if: github.event_name == 'workflow_dispatch'
         uses: apple-actions/upload-testflight-build@v1
         with:
-          app-path: ${{ runner.temp }}/export/*.ipa
+          app-path: ${{ steps.export.outputs.IPA_PATH }}
           api-key-id: ${{ secrets.APP_STORE_CONNECT_API_KEY_ID }}
-          api-key-issuer-id: ${{ secrets.APP_STORE_CONNECT_API_ISSUER_ID }}
+          issuer-id: ${{ secrets.APP_STORE_CONNECT_API_ISSUER_ID }}
           api-private-key: ${{ secrets.APP_STORE_CONNECT_API_PRIVATE_KEY }}
