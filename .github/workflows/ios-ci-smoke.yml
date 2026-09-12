@@ -93,7 +93,7 @@ jobs:
             <string>${EXPORT_METHOD}</string>
           </dict>
           </plist>
-PLIST
+          PLIST
           xcodebuild -exportArchive -archivePath "$ARCHIVE_PATH" -exportPath "$RUNNER_TEMP/export" -exportOptionsPlist "$RUNNER_TEMP/ExportOptions.plist"
           IPA_PATH=$(find "$RUNNER_TEMP/export" -name "*.ipa" | head -n 1 || true)
           if [ -z "$IPA_PATH" ]; then
