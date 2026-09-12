@@ -29,7 +29,14 @@ jobs:
           set -euo pipefail
 
           if ! command -v xcodegen >/dev/null; then
-            gem install xcodegen --no-document
+            if command -v brew >/dev/null; then
+              brew install xcodegen
+            elif command -v gem >/dev/null; then
+              gem install xcodegen --no-document
+            else
+              echo "No installer available for xcodegen."
+              exit 1
+            fi
           fi
 
           WORKSPACE=$(find . -name "*.xcworkspace" -maxdepth 6 -print -quit || true)
