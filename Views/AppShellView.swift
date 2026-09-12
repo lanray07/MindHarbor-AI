@@ -1,14 +1,16 @@
 import SwiftUI
+import SwiftData
 import UIKit
 
 struct AppShellView: View {
+    @Environment(\.modelContext) private var modelContext
     @AppStorage(MindHarborKeys.appLockEnabled) private var appLockEnabled = false
     @AppStorage(MindHarborKeys.lockInBackground) private var lockInBackground = true
     @AppStorage(MindHarborKeys.pendingIntentAction) private var pendingIntentAction = ""
     @State private var unlockInProgress = false
     @State private var isLocked = false
-    @State private var showOnboarding = true
-    @State private var selection: Int = 0
+    @State private var showOnboarding = !ScreenshotFixtures.isEnabled
+    @State private var selection: Int = ScreenshotFixtures.requestedTab
     @State private var unlockFailed = false
     @State private var shortcutMessage = ""
     @State private var showShortcutMessage = false
@@ -61,7 +63,12 @@ struct AppShellView: View {
             )
         }
         .onAppear {
-            showOnboarding = !UserDefaults.standard.bool(forKey: MindHarborKeys.didFinishOnboarding)
+            if ScreenshotFixtures.isEnabled {
+                showOnboarding = false
+                ScreenshotFixtures.seedIfNeeded(in: modelContext)
+            } else {
+                showOnboarding = !UserDefaults.standard.bool(forKey: MindHarborKeys.didFinishOnboarding)
+            }
             if appLockEnabled {
                 lockNow()
             }

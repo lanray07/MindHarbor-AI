@@ -1,0 +1,93 @@
+name: App Store Screenshots
+
+on:
+  workflow_dispatch:
+
+jobs:
+  screenshots:
+    runs-on: macos-15
+    timeout-minutes: 30
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Select Xcode
+        uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: latest-stable
+
+      - name: Generate project
+        shell: bash
+        run: |
+          set -euo pipefail
+          command -v xcodegen >/dev/null || brew install xcodegen
+          xcodegen generate
+
+      - name: Build for Simulator
+        shell: bash
+        run: |
+          set -euo pipefail
+          xcodebuild \
+            -project MindHarborAI.xcodeproj \
+            -scheme MindHarborAI \
+            -configuration Release \
+            -sdk iphonesimulator \
+            -derivedDataPath "$RUNNER_TEMP/DerivedData" \
+            CODE_SIGNING_ALLOWED=NO \
+            build
+
+      - name: Capture iPhone and iPad screenshots
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          APP_PATH=$(find "$RUNNER_TEMP/DerivedData/Build/Products/Release-iphonesimulator" -maxdepth 1 -name "*.app" -print -quit)
+          BUNDLE_ID="com.MindHarborAI.app"
+          OUTPUT="$GITHUB_WORKSPACE/AppStoreScreenshots"
+          mkdir -p "$OUTPUT/iPhone-6.5" "$OUTPUT/iPad-12.9"
+
+          RUNTIME=$(xcrun simctl list runtimes -j | python3 -c 'import json,sys; r=[x for x in json.load(sys.stdin)["runtimes"] if x.get("isAvailable") and x["identifier"].startswith("com.apple.CoreSimulator.SimRuntime.iOS")]; print(r[-1]["identifier"])')
+
+          device_type() {
+            local preferred="$1"
+            local fallback="$2"
+            xcrun simctl list devicetypes -j | python3 -c 'import json,sys; d=json.load(sys.stdin)["devicetypes"]; p=sys.argv[1]; f=sys.argv[2]; m=next((x for x in d if x["name"]==p), None) or next((x for x in d if x["name"]==f), None); print(m["identifier"] if m else "")' "$preferred" "$fallback"
+          }
+
+          IPHONE_TYPE=$(device_type "iPhone 14 Plus" "iPhone 13 Pro Max")
+          IPAD_TYPE=$(device_type "iPad Pro (12.9-inch) (6th generation)" "iPad Pro (12.9-inch) (5th generation)")
+
+          capture_device() {
+            local name="$1"
+            local type="$2"
+            local output_dir="$3"
+            local udid
+            udid=$(xcrun simctl create "$name" "$type" "$RUNTIME")
+            xcrun simctl boot "$udid"
+            xcrun simctl bootstatus "$udid" -b
+            xcrun simctl install "$udid" "$APP_PATH"
+            xcrun simctl status_bar "$udid" override --time "9:41" --batteryState charged --batteryLevel 100 --wifiBars 3 --cellularBars 4
+
+            for item in "01-Today:0" "02-Journal:1" "03-Patterns:2"; do
+              local filename="${item%%:*}"
+              local tab="${item##*:}"
+              xcrun simctl terminate "$udid" "$BUNDLE_ID" 2>/dev/null || true
+              xcrun simctl launch "$udid" "$BUNDLE_ID" --screenshot-mode "--screenshot-tab=$tab"
+              sleep 5
+              xcrun simctl io "$udid" screenshot "$output_dir/$filename.png"
+            done
+
+            xcrun simctl shutdown "$udid"
+            xcrun simctl delete "$udid"
+          }
+
+          capture_device "MindHarbor Store iPhone" "$IPHONE_TYPE" "$OUTPUT/iPhone-6.5"
+          capture_device "MindHarbor Store iPad" "$IPAD_TYPE" "$OUTPUT/iPad-12.9"
+
+      - name: Upload screenshots
+        uses: actions/upload-artifact@v4
+        with:
+          name: MindHarbor-App-Store-Screenshots
+          path: AppStoreScreenshots
+          if-no-files-found: error
+          retention-days: 14
