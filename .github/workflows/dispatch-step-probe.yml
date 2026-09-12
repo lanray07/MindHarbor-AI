@@ -1,0 +1,12 @@
+name: iOS CI Step Probe
+on:
+  push:
+    branches: [master]
+  workflow_dispatch:
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    steps:
+      - id: resolve
+        run: echo "SCHEME=Demo" >> "$GITHUB_OUTPUT"
+      - run: echo "scheme=${{ steps.resolve.outputs.SCHEME }}"
