@@ -82,6 +82,14 @@ jobs:
           fi
 
           if [ -z "$SCHEME" ]; then
+            if [ -n "$PROJECT" ]; then
+              SCHEME="$(basename "$PROJECT" .xcodeproj)"
+            elif [ -n "$WORKSPACE" ]; then
+              SCHEME="$(basename "$WORKSPACE" .xcworkspace)"
+            fi
+          fi
+
+          if [ -z "$SCHEME" ]; then
             echo "Could not detect a scheme. Set XCODE_SCHEME_OVERRIDE in repository environment variables."
             exit 1
           fi

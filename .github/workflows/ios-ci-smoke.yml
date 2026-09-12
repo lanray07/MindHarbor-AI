@@ -75,6 +75,13 @@ jobs:
             SCHEME=$(echo "$SCHEME_LIST" | awk '/^    Schemes:/{p=1; next} p && /^    / && !/Schemes:/{print $1; exit}')
           fi
           if [ -z "$SCHEME" ]; then
+            if [ -n "$PROJECT" ]; then
+              SCHEME="$(basename "$PROJECT" .xcodeproj)"
+            elif [ -n "$WORKSPACE" ]; then
+              SCHEME="$(basename "$WORKSPACE" .xcworkspace)"
+            fi
+          fi
+          if [ -z "$SCHEME" ]; then
             echo "Could not infer scheme."
             exit 1
           fi
