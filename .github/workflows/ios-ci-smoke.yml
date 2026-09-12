@@ -2,13 +2,111 @@ name: iOS CI Smoke
 
 on:
   push:
-    branches: [master]
+    branches:
+      - master
   workflow_dispatch:
 
 jobs:
-  smoke:
-    runs-on: ubuntu-latest
+  xcode-build:
+    runs-on: macos-latest
+    env:
+      CONFIGURATION: Release
+      EXPORT_METHOD: app-store
     steps:
-      - name: Smoke
+      - uses: actions/checkout@v4
+      - name: Setup Xcode
+        uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: latest-stable
+
+      - name: Resolve Xcode project and scheme
+        id: resolve
+        shell: bash
         run: |
-          echo "workflow dispatch and push hooks are alive"
+          set -euo pipefail
+          WORKSPACE=$(find . -name "*.xcworkspace" -maxdepth 6 -print | head -n 1 || true)
+          PROJECT=$(find . -name "*.xcodeproj" -maxdepth 6 -print | head -n 1 || true)
+          if [ -z "$WORKSPACE" ] && [ -z "$PROJECT" ]; then
+            echo "No project found."
+            exit 1
+          fi
+          if [ -n "$WORKSPACE" ]; then
+            SCHEME_LIST=$(xcodebuild -list -workspace "$WORKSPACE")
+            echo "TYPE=workspace" >> "$GITHUB_OUTPUT"
+            echo "TARGET=$WORKSPACE" >> "$GITHUB_OUTPUT"
+          else
+            SCHEME_LIST=$(xcodebuild -list -project "$PROJECT")
+            echo "TYPE=project" >> "$GITHUB_OUTPUT"
+            echo "TARGET=$PROJECT" >> "$GITHUB_OUTPUT"
+          fi
+          SCHEME=$(echo "$SCHEME_LIST" | awk '/^    Schemes:/{p=1; next} p && /^    / && !/Schemes:/{print $1; exit}')
+          if [ -z "$SCHEME" ]; then
+            echo "Could not infer scheme."
+            exit 1
+          fi
+          echo "SCHEME=$SCHEME" >> "$GITHUB_OUTPUT"
+
+      - name: Build
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ "${{ steps.resolve.outputs.TYPE }}" = "workspace" ]; then
+            xcodebuild -workspace "${{ steps.resolve.outputs.TARGET }}" -scheme "${{ steps.resolve.outputs.SCHEME }}" -configuration "$CONFIGURATION" -destination "generic/platform=iOS" build
+          else
+            xcodebuild -project "${{ steps.resolve.outputs.TARGET }}" -scheme "${{ steps.resolve.outputs.SCHEME }}" -configuration "$CONFIGURATION" -destination "generic/platform=iOS" build
+          fi
+
+      - name: Archive for TestFlight (manual only)
+        if: github.event_name == 'workflow_dispatch'
+        id: export
+        env:
+          BUILD_CERTIFICATE_BASE64: ${{ secrets.BUILD_CERTIFICATE_BASE64 }}
+          BUILD_CERTIFICATE_PASSWORD: ${{ secrets.BUILD_CERTIFICATE_PASSWORD }}
+          BUILD_MOBILEPROVISION_BASE64: ${{ secrets.BUILD_MOBILEPROVISION_BASE64 }}
+          XCODE_DEVELOPMENT_TEAM: ${{ secrets.XCODE_DEVELOPMENT_TEAM }}
+          KEYCHAIN_PASSWORD: ${{ secrets.KEYCHAIN_PASSWORD }}
+        run: |
+          set -euo pipefail
+          if [ -z "$BUILD_CERTIFICATE_BASE64" ] || [ -z "$BUILD_CERTIFICATE_PASSWORD" ] || [ -z "$BUILD_MOBILEPROVISION_BASE64" ] || [ -z "$XCODE_DEVELOPMENT_TEAM" ]; then
+            echo "Missing signing secrets."
+            exit 1
+          fi
+          mkdir -p "$RUNNER_TEMP/export" ~/certs ~/profiles
+          echo "$BUILD_CERTIFICATE_BASE64" | base64 --decode > ~/certs/build_certificate.p12
+          echo "$BUILD_MOBILEPROVISION_BASE64" | base64 --decode > ~/profiles/profile.mobileprovision
+          KEYCHAIN_PASSWORD="${KEYCHAIN_PASSWORD:-temp-pass}"
+          security create-keychain -p "$KEYCHAIN_PASSWORD" build.keychain
+          security import ~/certs/build_certificate.p12 -k ~/Library/Keychains/build.keychain -P "$BUILD_CERTIFICATE_PASSWORD" -T /usr/bin/codesign
+          security set-key-partition-list -S apple-tool:,apple: -s -k "$KEYCHAIN_PASSWORD" ~/Library/Keychains/build.keychain
+          ARCHIVE_PATH="$RUNNER_TEMP/${{ steps.resolve.outputs.SCHEME }}.xcarchive"
+          if [ "${{ steps.resolve.outputs.TYPE }}" = "workspace" ]; then
+            xcodebuild -workspace "${{ steps.resolve.outputs.TARGET }}" -scheme "${{ steps.resolve.outputs.SCHEME }}" -archivePath "$ARCHIVE_PATH" DEVELOPMENT_TEAM="$XCODE_DEVELOPMENT_TEAM" CODE_SIGN_STYLE=Manual archive
+          else
+            xcodebuild -project "${{ steps.resolve.outputs.TARGET }}" -scheme "${{ steps.resolve.outputs.SCHEME }}" -archivePath "$ARCHIVE_PATH" DEVELOPMENT_TEAM="$XCODE_DEVELOPMENT_TEAM" CODE_SIGN_STYLE=Manual archive
+          fi
+          cat > "$RUNNER_TEMP/ExportOptions.plist" <<'PLIST'
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0">
+          <dict>
+            <key>method</key>
+            <string>${EXPORT_METHOD}</string>
+          </dict>
+          </plist>
+PLIST
+          xcodebuild -exportArchive -archivePath "$ARCHIVE_PATH" -exportPath "$RUNNER_TEMP/export" -exportOptionsPlist "$RUNNER_TEMP/ExportOptions.plist"
+          IPA_PATH=$(find "$RUNNER_TEMP/export" -name "*.ipa" | head -n 1 || true)
+          if [ -z "$IPA_PATH" ]; then
+            echo "No IPA found."
+            exit 1
+          fi
+          echo "IPA_PATH=$IPA_PATH" >> "$GITHUB_OUTPUT"
+
+      - name: Upload to TestFlight
+        if: github.event_name == 'workflow_dispatch'
+        uses: apple-actions/upload-testflight-build@v1
+        with:
+          app-path: ${{ steps.export.outputs.IPA_PATH }}
+          api-key-id: ${{ secrets.APP_STORE_CONNECT_API_KEY_ID }}
+          api-key-issuer-id: ${{ secrets.APP_STORE_CONNECT_API_ISSUER_ID }}
+          api-private-key: ${{ secrets.APP_STORE_CONNECT_API_PRIVATE_KEY }}
