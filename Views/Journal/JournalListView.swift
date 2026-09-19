@@ -1,6 +1,5 @@
 import SwiftUI
 import SwiftData
-import Translation
 
 private enum JournalFilter: String, CaseIterable, Identifiable {
     case all = "All"
@@ -115,7 +114,6 @@ struct JournalEntryDetailView: View {
     @State private var text: String
     @State private var confirmDeleteAudio = false
     @State private var confirmDeleteTranscript = false
-    @State private var showTranslation = false
 
     init(entry: JournalEntry) {
         self.entry = entry
@@ -158,22 +156,6 @@ struct JournalEntryDetailView: View {
                         .foregroundStyle(.secondary)
                 }
                 Section("Support actions") {
-                    if #available(iOS 18.0, *) {
-                        Button {
-                            showTranslation = true
-                        } label: {
-                            Label("Translate entry", systemImage: "translate")
-                        }
-
-                        Text("Translation is processed on this device. Your original journal entry stays unchanged.")
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-                    } else {
-                        Label("On-device translation requires iOS 18 or later", systemImage: "translate")
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-                    }
-
                     ShareLink(
                         "Share selected journal entry",
                         item: shareableText,
@@ -206,7 +188,6 @@ struct JournalEntryDetailView: View {
                 }
             }
             .navigationTitle("Entry")
-            .modifier(JournalTranslationModifier(isPresented: $showTranslation, text: translatableText))
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Close") { dismiss() }
@@ -241,12 +222,6 @@ struct JournalEntryDetailView: View {
         ].joined(separator: "\n")
     }
 
-    private var translatableText: String {
-        [title, text]
-            .filter { !$0.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }
-            .joined(separator: "\n\n")
-    }
-
     private func deleteAudio() {
         entry.deletedAudio = true
         entry.audioFileName = nil
@@ -257,19 +232,5 @@ struct JournalEntryDetailView: View {
     private func deleteTranscript() {
         entry.transcript = nil
         try? context.save()
-    }
-}
-
-private struct JournalTranslationModifier: ViewModifier {
-    @Binding var isPresented: Bool
-    let text: String
-
-    @ViewBuilder
-    func body(content: Content) -> some View {
-        if #available(iOS 18.0, *) {
-            content.translationPresentation(isPresented: $isPresented, text: text)
-        } else {
-            content
-        }
     }
 }
